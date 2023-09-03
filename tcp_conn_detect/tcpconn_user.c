@@ -16,6 +16,7 @@
 
 #define COMM_SIZE 32
 #define MAX_TCP_CONN_ENTRIES 256
+#define K_OBJECT_NAME "processConnEBPF_kern.o"
 
 struct tcpconn_data {
     int32_t pid;
@@ -43,7 +44,7 @@ int main(int ac, char **argv)
     struct bpf_program *prog2;
     struct bpf_link *link1;
     struct bpf_link *link2;
-    char filename[256];
+    char *filename = K_OBJECT_NAME;
     struct rlimit lim = {
         .rlim_cur = RLIM_INFINITY,
         .rlim_max = RLIM_INFINITY,
@@ -52,8 +53,6 @@ int main(int ac, char **argv)
     int map_fd2;
     struct tcpconn_data tcpconn;
 
-    snprintf(filename, sizeof(filename), "%s_kern.o", argv[0]);
-    
     setrlimit(RLIMIT_MEMLOCK, &lim);
     
     obj = bpf_object__open(filename);
