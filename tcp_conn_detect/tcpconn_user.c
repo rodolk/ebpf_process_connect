@@ -5,7 +5,6 @@
 #include <linux/bpf.h>
 #include <bpf/bpf.h>
 #include <bpf/libbpf.h>
-//#include "sock_example.h"
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
