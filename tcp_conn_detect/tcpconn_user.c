@@ -19,6 +19,7 @@
 #define K_OBJECT_NAME "processConnEBPF_kern.o"
 
 struct tcpconn_data {
+    int32_t tgid;
     int32_t pid;
     int32_t ppid;
     uint32_t uid;
@@ -33,8 +34,8 @@ struct tcpconn_data {
 struct bpf_object *obj;
 
 static void int_exit(int sig) {
+    printf("CTRL-C Signal received\n");
     bpf_object__close(obj);
-    printf("OTRO EXIT\n");
     exit(0);
 }
 
@@ -52,6 +53,11 @@ int main(int ac, char **argv)
     int map_fd1;
     int map_fd2;
     struct tcpconn_data tcpconn;
+    uint32_t keyindex = 0;
+    uint8_t idxvalue = 0;
+    uint8_t prev_idxvalue = 0;
+    uint32_t prev_idxvalue2 = 0;
+    uint32_t counter = 0;
 
     setrlimit(RLIMIT_MEMLOCK, &lim);
     
@@ -85,14 +91,12 @@ int main(int ac, char **argv)
     }
 
     link1 = bpf_program__attach_kprobe(prog1, false, "tcp_v4_connect");
-/*    link = bpf_program__attach(prog); */
     if (libbpf_get_error(link1)) {
         fprintf(stderr, "ERROR: attaching BPF program to kprobe/tcp_v4_connect\n");
         goto err;
     }
 
     link2 = bpf_program__attach_kprobe(prog2, true, "tcp_v4_connect");
-/*    link = bpf_program__attach(prog); */
     if (libbpf_get_error(link2)) {
         fprintf(stderr, "ERROR: attaching BPF program, link2, to kretprobe/tcp_v4_connect\n");
         goto err1;
@@ -110,22 +114,17 @@ int main(int ac, char **argv)
         goto err2;
     }
 
-    uint32_t keyindex = 0;
-    uint8_t idxvalue = 0;
-    uint8_t prev_idxvalue = 0;
-    uint32_t prev_idxvalue2 = 0;
-    uint32_t counter = 0;
-    
+   
     while(counter++ < 300) {
         assert(bpf_map_lookup_elem(map_fd1, &keyindex, &idxvalue) == 0);
         printf("READ IDXVALUE: %u\n", idxvalue);
-        printf("PREVIDXVALUE: %u\n", prev_idxvalue);
+        printf("PREVIOUS IDXVALUE: %u\n", prev_idxvalue);
         if (idxvalue != prev_idxvalue) {
             prev_idxvalue++;
             prev_idxvalue2 = prev_idxvalue;
             assert(bpf_map_lookup_elem(map_fd2, &prev_idxvalue2, &tcpconn) == 0);
             printf("NEW CONNECTION:\n");
-            printf("PID: %d, COMM: %s, PPID: %d, UID: %u\n", tcpconn.pid, tcpconn.comm, tcpconn.ppid, tcpconn.uid);
+            printf("TGID: %d, PID: %d, COMM: %s, PPID: %d, UID: %u\n", tcpconn.tgid, tcpconn.pid, tcpconn.comm, tcpconn.ppid, tcpconn.uid);
             uint8_t *ipfrom = (uint8_t *)&tcpconn.saddr;
             uint8_t *ipto = (uint8_t *)&tcpconn.daddr;
             printf("%u.%u.%u.%u:%u -> %u.%u.%u.%u:%u\n", ipfrom[3], ipfrom[2], ipfrom[1], ipfrom[0], tcpconn.lport, ipto[3], ipto[2], ipto[1], ipto[0], ntohs(tcpconn.dport));
