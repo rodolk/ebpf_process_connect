@@ -71,6 +71,9 @@ int tcpconn_return(struct pt_regs *ctx) {
     struct tcpconn_data tcpconn = {0};
     struct task_struct *real_parent;
 	struct sock **skpp;
+    //char strfmt1[] = "TRACE-1 tcp_v4_connect, TGID: %d, PID: %d\n";
+    //char strfmt2[] = "TRACE-2 tcp_v4_connect, TGID: %d, PPID: %d\n";
+    //char strfmt3[] = "TRACE-3 tcp_v4_connect, COMM: %s\n";
 
     task = (struct task_struct *)bpf_get_current_task();
     if (!task) return 1;
@@ -107,6 +110,10 @@ int tcpconn_return(struct pt_regs *ctx) {
     
     ret = bpf_get_current_comm(tcpconn.comm, COMM_SIZE);
     if (ret < 0) return 1;
+
+    //bpf_trace_printk(strfmt1, sizeof(strfmt1), tcpconn.tgid, tcpconn.pid);
+    //bpf_trace_printk(strfmt2, sizeof(strfmt2), tcpconn.tgid, tcpconn.ppid);
+    //bpf_trace_printk(strfmt3, sizeof(strfmt3), tcpconn.comm);
 
     idxvaluePtr = bpf_map_lookup_elem(&my_map_index, &index);
     if (idxvaluePtr) {
