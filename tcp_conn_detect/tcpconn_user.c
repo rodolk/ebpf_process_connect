@@ -101,13 +101,13 @@ int main(int ac, char **argv)
         goto err1;
     }
 
-	map_fd1 = bpf_object__find_map_fd_by_name(obj, "my_map_index");
+    map_fd1 = bpf_object__find_map_fd_by_name(obj, "my_map_index");
     if (map_fd1 < 0) {
         printf("Error-1, get map fd from bpf obj failed\n");
         goto err2;
     }
 
-	map_fd2 = bpf_object__find_map_fd_by_name(obj, "tcpconn_map");
+    map_fd2 = bpf_object__find_map_fd_by_name(obj, "tcpconn_map");
     if (map_fd2 < 0) {
         printf("Error-2, get map fd from bpf obj failed\n");
         goto err2;
