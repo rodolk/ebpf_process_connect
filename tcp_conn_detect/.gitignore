@@ -1,3 +1,5 @@
 tcpconn
 *.o
+.tcpconn_user.o.d
+
 
